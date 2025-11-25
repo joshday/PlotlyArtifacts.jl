@@ -142,7 +142,7 @@ jobs:
             using Pkg
             proj = Pkg.Types.read_project(\"Project.toml\")
             v = proj.version
-            proj.version = VersionNumber(\"$(v.major).$(v.minor).$(v.patch + 1)\")
+            proj.version = VersionNumber(v.major, v.minor, v.patch + 1)
             Pkg.Types.write_project(proj, \"Project.toml\")
             "
 
