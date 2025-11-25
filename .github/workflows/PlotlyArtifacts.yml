@@ -113,15 +113,18 @@ jobs:
             # Add artifacts to Artifacts.toml
             add_artifact!(\"Artifacts.toml\",
               \"plotly_min_js\",
-              \"\$release_url/plotly.min.js-\$plotly_js_version.tar.gz\")
+              \"\$release_url/plotly.min.js-\$plotly_js_version.tar.gz\",
+              lazy=true, force=true)
 
             add_artifact!(\"Artifacts.toml\",
               \"plot_schema_json\",
-              \"\$release_url/plot-schema.json-\$plotly_js_version.tar.gz\")
+              \"\$release_url/plot-schema.json-\$plotly_js_version.tar.gz\",
+              lazy=true, force=true)
 
             add_artifact!(\"Artifacts.toml\",
               \"templates\",
-              \"\$release_url/templates-\$templates_version.tar.gz\")
+              \"\$release_url/templates-\$templates_version.tar.gz\",
+              lazy=true, force=true)
           "
 
       - name: Create Pull Request if Artifacts.toml changed
