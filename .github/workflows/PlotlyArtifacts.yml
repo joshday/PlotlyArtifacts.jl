@@ -87,6 +87,7 @@ jobs:
       - name: Update Artifacts.toml
         run: |
           julia -e '
+            using Pkg; Pkg.add("ArtifactUtils");
             using ArtifactUtils
 
             repo = "${{ github.repository }}"
