@@ -80,9 +80,9 @@ jobs:
           TEMPLATES_VERSION="${{ steps.templates.outputs.version }}"
 
           # Upload the tar.gz files
-          gh release upload Artifacts plotly.min.js-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }}
-          gh release upload Artifacts plot-schema.json-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }}
-          gh release upload Artifacts templates-${TEMPLATES_VERSION}.tar.gz --repo ${{ github.repository }}
+          gh release upload Artifacts plotly.min.js-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }} --clobber
+          gh release upload Artifacts plot-schema.json-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }} --clobber
+          gh release upload Artifacts templates-${TEMPLATES_VERSION}.tar.gz --repo ${{ github.repository }} --clobber
 
           echo "Uploaded all artifacts to Artifacts release"
 
