@@ -8,5 +8,4 @@ schema() = artifact"plotly-schema"
 
 templates() = readdir(artifact"plotly-templates", join=true)
 
-
 end
