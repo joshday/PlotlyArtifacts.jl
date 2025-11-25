@@ -1,0 +1,180 @@
+name: Plotly Artifacts
+
+on:
+  schedule:
+    # Run once daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  publish-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download latest Plotly.js
+        id: download
+        run: |
+          # Get latest release tag
+          RESPONSE=$(curl -s https://api.github.com/repos/plotly/plotly.js/releases/latest)
+          VERSION=$(echo $RESPONSE | jq -r '.tag_name')
+          DOWNLOAD_URL="https://github.com/plotly/plotly.js/raw/$VERSION/dist/plotly.min.js"
+
+          # Download the file
+          curl -L -o plotly.min.js "$DOWNLOAD_URL"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Downloaded Plotly version: $VERSION"
+      - name: Download latest Plotly schema
+        run: |
+          VERSION="${{ steps.download.outputs.version }}"
+          SCHEMA_URL="https://github.com/plotly/plotly.js/raw/$VERSION/dist/plot-schema.json"
+
+          curl -L -o plot-schema.json "$SCHEMA_URL"
+          echo "Downloaded Plotly schema for version: $VERSION"
+      - name: Download Plotly Python templates
+        run: |
+          mkdir -p templates
+
+          TEMPLATES=("ggplot2" "gridon" "plotly" "plotly_dark" "plotly_white" "presentation" "seaborn" "simple_white" "xgridoff" "ygridoff")
+
+          for template in "${TEMPLATES[@]}"; do
+            TEMPLATE_URL="https://raw.githubusercontent.com/plotly/plotly.py/refs/heads/main/plotly/package_data/templates/${template}.json"
+            curl -L -o "templates/${template}.json" "$TEMPLATE_URL"
+            echo "Downloaded template: $template"
+          done
+
+          echo "Downloaded all Plotly Python templates"
+      - name: Download latest Kaleido wheel
+        run: |
+          # Get latest release tag
+          RESPONSE=$(curl -s https://api.github.com/repos/plotly/Kaleido/releases/latest)
+          DOWNLOAD_URL=$(echo $RESPONSE | jq -r '.assets[] | select(.name | endswith(".whl")) | .browser_download_url' | head -1)
+
+          if [ -z "$DOWNLOAD_URL" ]; then
+            echo "Error: Could not find Kaleido wheel in latest release"
+            exit 1
+          fi
+
+          mkdir -p kaleido
+          curl -L -o "kaleido/$(basename $DOWNLOAD_URL)" "$DOWNLOAD_URL"
+          echo "Downloaded Kaleido wheel: $(basename $DOWNLOAD_URL)"
+      - name: Create tar.gz artifacts
+        run: |
+          tar -czf plotly.min.js.tar.gz plotly.min.js
+          echo "Created plotly.min.js.tar.gz"
+
+          tar -czf plot-schema.json.tar.gz plot-schema.json
+          echo "Created plot-schema.json.tar.gz"
+
+          tar -czf templates.tar.gz templates/
+          echo "Created templates.tar.gz"
+
+          tar -czf kaleido.tar.gz kaleido/
+          echo "Created kaleido.tar.gz"
+      - name: Get artifact versions
+        id: versions
+        run: |
+          PLOTLY_VERSION=$(head -1 plotly.min.js | grep -oP 'v\d+\.\d+\.\d+' || echo "unknown")
+          SCHEMA_VERSION=$(jq -r '.version' plot-schema.json 2>/dev/null || echo "unknown")
+          KALEIDO_VERSION=$(basename kaleido/*.whl | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "unknown")
+
+          echo "plotly_version=$PLOTLY_VERSION" >> $GITHUB_OUTPUT
+          echo "schema_version=$SCHEMA_VERSION" >> $GITHUB_OUTPUT
+          echo "kaleido_version=$KALEIDO_VERSION" >> $GITHUB_OUTPUT
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1'
+      - name: Update Artifacts.toml
+        run: |
+          julia -e '
+            using ArtifactUtils
+
+            repo = "${{ github.repository }}"
+            plotly_version = "${{ steps.versions.outputs.plotly_version }}"
+            schema_version = "${{ steps.versions.outputs.schema_version }}"
+            kaleido_version = "${{ steps.versions.outputs.kaleido_version }}"
+
+            ArtifactUtils.add_artifact!(
+              "Artifacts.toml",
+              "plotly-js",
+              "https://github.com/$(repo)/releases/download/plotly.min.js-$(plotly_version)/plotly.min.js.tar.gz",
+              lazy = true
+            )
+            ArtifactUtils.add_artifact!(
+              "Artifacts.toml",
+              "plotly-schema",
+              "https://github.com/$(repo)/releases/download/plot-schema.json-$(schema_version)/plot-schema.json.tar.gz",
+              lazy = true
+            )
+            ArtifactUtils.add_artifact!(
+              "Artifacts.toml",
+              "plotly-templates",
+              "https://github.com/$(repo)/releases/download/templates-$(schema_version)/templates.tar.gz",
+              lazy = true
+            )
+            ArtifactUtils.add_artifact!(
+              "Artifacts.toml",
+              "plotly-kaleido",
+              "https://github.com/$(repo)/releases/download/kaleido-$(kaleido_version)/kaleido.tar.gz",
+              lazy = true
+            )
+          '
+      - name: Create releases for artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Helper function to create release if it doesn't exist
+          create_release_if_missing() {
+            local tag=$1
+            local file=$2
+            local description=$3
+
+            if gh release view "$tag" > /dev/null 2>&1; then
+              echo "Release $tag already exists, skipping creation"
+            else
+              echo "Creating release $tag"
+              gh release create "$tag" "$file" --title "$tag" --notes "$description"
+            fi
+          }
+
+          PLOTLY_VERSION="${{ steps.versions.outputs.plotly_version }}"
+          SCHEMA_VERSION="${{ steps.versions.outputs.schema_version }}"
+          KALEIDO_VERSION="${{ steps.versions.outputs.kaleido_version }}"
+
+          create_release_if_missing "plotly.min.js-$PLOTLY_VERSION" "plotly.min.js.tar.gz" "Plotly.js library version $PLOTLY_VERSION"
+          create_release_if_missing "plot-schema.json-$SCHEMA_VERSION" "plot-schema.json.tar.gz" "Plotly schema version $SCHEMA_VERSION"
+          create_release_if_missing "templates-$SCHEMA_VERSION" "templates.tar.gz" "Plotly Python templates"
+          create_release_if_missing "kaleido-$KALEIDO_VERSION" "kaleido.tar.gz" "Kaleido wheel version $KALEIDO_VERSION"
+      - name: Create PR for Artifacts.toml if changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if Artifacts.toml was modified
+          if git diff --quiet Artifacts.toml; then
+            echo "Artifacts.toml unchanged, skipping PR creation"
+            exit 0
+          fi
+
+          echo "Artifacts.toml has changes, creating PR"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create a new branch
+          BRANCH_NAME="update-artifacts-$(date +%s)"
+          git checkout -b "$BRANCH_NAME"
+
+          # Commit changes
+          git add Artifacts.toml
+          git commit -m "Update Artifacts.toml with latest artifacts"
+
+          # Push the branch
+          git push origin "$BRANCH_NAME"
+
+          # Create PR
+          gh pr create \
+            --title "Update Artifacts.toml" \
+            --body "Automatically generated PR to update Artifacts.toml with the latest artifact releases." \
+            --base main \
+            --head "$BRANCH_NAME"
