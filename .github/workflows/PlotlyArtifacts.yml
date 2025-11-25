@@ -124,23 +124,12 @@ jobs:
               \"\$release_url/templates-\$templates_version.tar.gz\")
           "
 
-      - name: Commit and push Artifacts.toml if changed
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Check if Artifacts.toml has changes
-          if git diff --quiet Artifacts.toml; then
-            echo "Artifacts.toml has not changed, skipping commit"
-            exit 0
-          fi
-
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Commit the changes
-          git add Artifacts.toml
-          git commit -m "Update Artifacts.toml with latest versions"
-
-          # Push to main branch
-          git push origin HEAD:main
+      - name: Create Pull Request if Artifacts.toml changed
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Update Artifacts.toml with latest versions'
+          title: 'Update Artifacts.toml with latest versions'
+          body: 'This PR updates Artifacts.toml with the latest artifact versions from the Artifacts release.'
+          branch: 'update-artifacts'
+          delete-branch: true
