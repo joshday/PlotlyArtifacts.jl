@@ -92,8 +92,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          persist-credentials: false
 
       - name: Update Artifacts.toml with ArtifactUtils.jl
         uses: julia-actions/setup-julia@v1
@@ -132,7 +130,6 @@ jobs:
       - name: Create Pull Request if Artifacts.toml changed
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'Update Artifacts.toml with latest versions'
           title: 'Update Artifacts.toml with latest versions'
           body: 'This PR updates Artifacts.toml with the latest artifact versions from the Artifacts release.'
