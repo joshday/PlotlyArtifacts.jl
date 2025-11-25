@@ -104,6 +104,7 @@ jobs:
 
             # Get the release URL
             repo = \"${{ github.repository }}\"
+            @info repo
             release_url = \"https://github.com/\$repo/releases/download/Artifacts\"
 
             plotly_js_version = \"${{ steps.download.outputs.version }}\"
@@ -116,12 +117,12 @@ jobs:
               lazy=true, force=true)
 
             add_artifact!(\"Artifacts.toml\",
-              \"plot_schema_json\",
+              \"plotly_schema_json\",
               \"\$release_url/plot-schema.json-\$plotly_js_version.tar.gz\",
               lazy=true, force=true)
 
             add_artifact!(\"Artifacts.toml\",
-              \"templates\",
+              \"plotly_templates\",
               \"\$release_url/templates-\$templates_version.tar.gz\",
               lazy=true, force=true)
           "

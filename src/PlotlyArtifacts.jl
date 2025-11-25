@@ -1,13 +1,11 @@
 module PlotlyArtifacts
 
-using Artifacts
+using LazyArtifacts
 
-plotly() = artifact"plotly-js"
+plotly() = readdir(artifact"plotly_min_js", join=true)[1]
 
-schema() = artifact"plotly-schema"
+schema() = readdir(artifact"plotly_schema_json", join=true)[1]
 
-templates() = readdir(artifact"plotly-templates", join=true)
+templates() = readdir(readdir(artifact"plotly_templates", join=true)[1], join=true)
 
 end
-
-
