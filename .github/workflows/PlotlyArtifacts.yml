@@ -107,7 +107,7 @@ jobs:
           create_release_if_missing "templates-$SCHEMA_VERSION" "templates.tar.gz" "Plotly Python templates"
           create_release_if_missing "kaleido-$KALEIDO_VERSION" "kaleido.tar.gz" "Kaleido wheel version $KALEIDO_VERSION"
       - name: Setup Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: '1'
       - name: Update Artifacts.toml
