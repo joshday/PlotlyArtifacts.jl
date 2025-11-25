@@ -125,6 +125,20 @@ jobs:
               \"templates\",
               \"\$release_url/templates-\$templates_version.tar.gz\",
               lazy=true, force=true)
+
+            # Bump patch version in Project.toml if Artifacts.toml changed
+            if !isempty(readlines(\`git diff Artifacts.toml\`))
+              project_content = read(\"Project.toml\", String)
+              version_match = match(r\"version = \\\"([0-9]+\\.[0-9]+\\.[0-9]+)\\\"\", project_content)
+              if version_match !== nothing
+                current_version = version_match.captures[1]
+                parts = split(current_version, \".\")
+                major, minor, patch = parse(Int, parts[1]), parse(Int, parts[2]), parse(Int, parts[3])
+                new_version = \"\$(major).\$(minor).\$(patch + 1)\"
+                new_content = replace(project_content, r\"version = \\\"[0-9]+\\.[0-9]+\\.[0-9]+\\\"\" => \"version = \\\"\$(new_version)\\\"\")
+                write(\"Project.toml\", new_content)
+              end
+            end
           "
 
       - name: Create Pull Request if Artifacts.toml changed
