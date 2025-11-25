@@ -93,10 +93,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Update Artifacts.toml with ArtifactUtils.jl
+      - name: Update Artifacts.toml
         uses: julia-actions/setup-julia@v1
-        with:
-          version: '1.10'
+
       - run: |
           julia -e "
             using Pkg
@@ -125,23 +124,30 @@ jobs:
               \"templates\",
               \"\$release_url/templates-\$templates_version.tar.gz\",
               lazy=true, force=true)
-
-            # Bump patch version in Project.toml if Artifacts.toml changed
-            if !isempty(readlines(\`git diff Artifacts.toml\`))
-              project_content = read(\"Project.toml\", String)
-              version_match = match(r\"version = \\\"([0-9]+\\.[0-9]+\\.[0-9]+)\\\"\", project_content)
-              if version_match !== nothing
-                current_version = version_match.captures[1]
-                parts = split(current_version, \".\")
-                major, minor, patch = parse(Int, parts[1]), parse(Int, parts[2]), parse(Int, parts[3])
-                new_version = \"\$(major).\$(minor).\$(patch + 1)\"
-                new_content = replace(project_content, r\"version = \\\"[0-9]+\\.[0-9]+\\.[0-9]+\\\"\" => \"version = \\\"\$(new_version)\\\"\")
-                write(\"Project.toml\", new_content)
-              end
-            end
           "
 
+      - name: Check if Artifacts.toml changed
+        id: artifacts-changed
+        run: |
+          if ! git diff --quiet Artifacts.toml; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump Version if Artifacts.toml changed
+        if: steps.artifacts-changed.outputs.changed == 'true'
+        run: |
+          julia -e "
+            using Pkg
+            proj = Pkg.Types.read_project(\"Project.toml\")
+            v = proj.version
+            proj.version = VersionNumber(\"$(v.major).$(v.minor).$(v.patch + 1)\")
+            Pkg.Types.write_project(proj, \"Project.toml\")
+            "
+
       - name: Create Pull Request if Artifacts.toml changed
+        if: steps.artifacts-changed.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           commit-message: 'Update Artifacts.toml with latest versions'
