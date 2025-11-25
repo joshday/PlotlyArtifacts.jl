@@ -1,23 +1,23 @@
-[plotly_schema_json]
-git-tree-sha1 = "9d6294475c7d4e3ab20593da0994fee40fa83449"
-lazy = true
-
-    [[plotly_schema_json.download]]
-    sha256 = "f2cc09efb48e08f24e0249d5ac26569c0a4399125a0543b3e0dd32198da7af4a"
-    url = "https://github.com/joshday/PlotlyArtifacts.jl/releases/download/Artifacts/plot-schema.json-v3.3.0.tar.gz"
-
 [plotly_min_js]
 git-tree-sha1 = "d572fcc2a43ce4cbf867cfedaea9bdc44a149b1e"
 lazy = true
 
     [[plotly_min_js.download]]
-    sha256 = "6d125aa863547fce3695240123948fc102940a59ad1908a9ca4ac89f83e2b693"
+    sha256 = "94641690c2c258dac4af93e53be653b7ead59ee0c5701a6acb3917437f439965"
     url = "https://github.com/joshday/PlotlyArtifacts.jl/releases/download/Artifacts/plotly.min.js-v3.3.0.tar.gz"
+
+[plotly_schema_json]
+git-tree-sha1 = "9d6294475c7d4e3ab20593da0994fee40fa83449"
+lazy = true
+
+    [[plotly_schema_json.download]]
+    sha256 = "b20bd58578c27b076e27dc3d651b3a2d1858cbf135dab19ae281fde7218cc368"
+    url = "https://github.com/joshday/PlotlyArtifacts.jl/releases/download/Artifacts/plot-schema.json-v3.3.0.tar.gz"
 
 [plotly_templates]
 git-tree-sha1 = "29a6d9308df19323652723244cdf2cf855e39f9e"
 lazy = true
 
     [[plotly_templates.download]]
-    sha256 = "e0b244c0f465a44503dab38800cecc28e78ff30ace09ecf480662714802ec49d"
+    sha256 = "e9b4bc722f13dbb49694341749f082bfccb2761aba2cc4aa52c38149f95f385f"
     url = "https://github.com/joshday/PlotlyArtifacts.jl/releases/download/Artifacts/templates-v6.5.0.tar.gz"
