@@ -128,7 +128,7 @@ jobs:
           "
 
       - name: Create Pull Request if Artifacts.toml changed
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           commit-message: 'Update Artifacts.toml with latest versions'
           title: 'Update Artifacts.toml with latest versions'
