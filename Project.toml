@@ -1,6 +1,6 @@
 name = "PlotlyArtifacts"
 uuid = "1b8d8d90-ffa2-41b8-b4ef-7f17ea431f2f"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Josh Day <emailjoshday@gmail.com> and contributors"]
 
 [compat]
