@@ -6,8 +6,7 @@ plotly() = artifact"plotly-js"
 
 schema() = artifact"plotly-schema"
 
-templates() = artifact"plotly-templates"
+templates() = readdir(artifact"plotly-templates", join=true)
 
-kaleido() = artifact"plotly-kaleido"
 
 end
