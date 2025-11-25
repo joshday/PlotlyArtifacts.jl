@@ -6,6 +6,9 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   publish-artifact:
     runs-on: ubuntu-latest
@@ -82,3 +85,34 @@ jobs:
           gh release upload Artifacts templates-${TEMPLATES_VERSION}.tar.gz --repo ${{ github.repository }}
 
           echo "Uploaded all artifacts to Artifacts release"
+
+      - name: Update Artifacts.toml with ArtifactUtils.jl
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.10'
+      - run: |
+          julia -e "
+            using Pkg
+            Pkg.add(\"ArtifactUtils\")
+            using ArtifactUtils
+
+            # Get the release URL
+            repo = \"${{ github.repository }}\"
+            release_url = \"https://github.com/\$repo/releases/download/Artifacts\"
+
+            plotly_js_version = \"${{ steps.download.outputs.version }}\"
+            templates_version = \"${{ steps.templates.outputs.version }}\"
+
+            # Add artifacts to Artifacts.toml
+            add_artifact!(\"Artifacts.toml\",
+              \"plotly_min_js\",
+              \"\$release_url/plotly.min.js-\$plotly_js_version.tar.gz\")
+
+            add_artifact!(\"Artifacts.toml\",
+              \"plot_schema_json\",
+              \"\$release_url/plot-schema.json-\$plotly_js_version.tar.gz\")
+
+            add_artifact!(\"Artifacts.toml\",
+              \"templates\",
+              \"\$release_url/templates-\$templates_version.tar.gz\")
+          "
