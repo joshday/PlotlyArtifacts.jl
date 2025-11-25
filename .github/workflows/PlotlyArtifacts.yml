@@ -69,6 +69,7 @@ jobs:
           echo "Created templates-${VERSION}.tar.gz"
 
       - name: Upload artifacts to Artifacts release
+        id: upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -83,20 +84,47 @@ jobs:
           PLOTLY_JS_VERSION="${{ steps.download.outputs.version }}"
           TEMPLATES_VERSION="${{ steps.templates.outputs.version }}"
 
-          # Upload the tar.gz files
-          gh release upload Artifacts plotly.min.js-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }} --clobber
-          gh release upload Artifacts plot-schema.json-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }} --clobber
-          gh release upload Artifacts templates-${TEMPLATES_VERSION}.tar.gz --repo ${{ github.repository }} --clobber
+          ARTIFACTS_CHANGED=false
 
-          echo "Uploaded all artifacts to Artifacts release"
+          # Check and upload plotly.min.js artifact
+          if ! gh release view Artifacts --repo ${{ github.repository }} | grep -q "plotly.min.js-${PLOTLY_JS_VERSION}.tar.gz"; then
+            gh release upload Artifacts plotly.min.js-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }}
+            echo "Uploaded plotly.min.js-${PLOTLY_JS_VERSION}.tar.gz"
+            ARTIFACTS_CHANGED=true
+          else
+            echo "plotly.min.js-${PLOTLY_JS_VERSION}.tar.gz already exists, skipping upload"
+          fi
+
+          # Check and upload plot-schema.json artifact
+          if ! gh release view Artifacts --repo ${{ github.repository }} | grep -q "plot-schema.json-${PLOTLY_JS_VERSION}.tar.gz"; then
+            gh release upload Artifacts plot-schema.json-${PLOTLY_JS_VERSION}.tar.gz --repo ${{ github.repository }}
+            echo "Uploaded plot-schema.json-${PLOTLY_JS_VERSION}.tar.gz"
+            ARTIFACTS_CHANGED=true
+          else
+            echo "plot-schema.json-${PLOTLY_JS_VERSION}.tar.gz already exists, skipping upload"
+          fi
+
+          # Check and upload templates artifact
+          if ! gh release view Artifacts --repo ${{ github.repository }} | grep -q "templates-${TEMPLATES_VERSION}.tar.gz"; then
+            gh release upload Artifacts templates-${TEMPLATES_VERSION}.tar.gz --repo ${{ github.repository }}
+            echo "Uploaded templates-${TEMPLATES_VERSION}.tar.gz"
+            ARTIFACTS_CHANGED=true
+          else
+            echo "templates-${TEMPLATES_VERSION}.tar.gz already exists, skipping upload"
+          fi
+
+          echo "artifacts_changed=$ARTIFACTS_CHANGED" >> $GITHUB_OUTPUT
 
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Update Artifacts.toml
+        if: steps.upload.outputs.artifacts_changed == 'true'
         uses: julia-actions/setup-julia@v1
 
-      - run: |
+      - name: Update Artifacts.toml with new versions
+        if: steps.upload.outputs.artifacts_changed == 'true'
+        run: |
           julia -e "
             using Pkg
             Pkg.add(\"ArtifactUtils\")
@@ -104,7 +132,6 @@ jobs:
 
             # Get the release URL
             repo = \"${{ github.repository }}\"
-            @info repo
             release_url = \"https://github.com/\$repo/releases/download/Artifacts\"
 
             plotly_js_version = \"${{ steps.download.outputs.version }}\"
