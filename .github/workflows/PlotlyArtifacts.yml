@@ -80,6 +80,32 @@ jobs:
           echo "plotly_version=$PLOTLY_VERSION" >> $GITHUB_OUTPUT
           echo "schema_version=$SCHEMA_VERSION" >> $GITHUB_OUTPUT
           echo "kaleido_version=$KALEIDO_VERSION" >> $GITHUB_OUTPUT
+      - name: Create releases for artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Helper function to create release if it doesn't exist
+          create_release_if_missing() {
+            local tag=$1
+            local file=$2
+            local description=$3
+
+            if gh release view "$tag" > /dev/null 2>&1; then
+              echo "Release $tag already exists, skipping creation"
+            else
+              echo "Creating release $tag"
+              gh release create "$tag" "$file" --title "$tag" --notes "$description"
+            fi
+          }
+
+          PLOTLY_VERSION="${{ steps.versions.outputs.plotly_version }}"
+          SCHEMA_VERSION="${{ steps.versions.outputs.schema_version }}"
+          KALEIDO_VERSION="${{ steps.versions.outputs.kaleido_version }}"
+
+          create_release_if_missing "plotly.min.js-$PLOTLY_VERSION" "plotly.min.js.tar.gz" "Plotly.js library version $PLOTLY_VERSION"
+          create_release_if_missing "plot-schema.json-$SCHEMA_VERSION" "plot-schema.json.tar.gz" "Plotly schema version $SCHEMA_VERSION"
+          create_release_if_missing "templates-$SCHEMA_VERSION" "templates.tar.gz" "Plotly Python templates"
+          create_release_if_missing "kaleido-$KALEIDO_VERSION" "kaleido.tar.gz" "Kaleido wheel version $KALEIDO_VERSION"
       - name: Setup Julia
         uses: julia-actions/setup-julia@v1
         with:
@@ -120,32 +146,6 @@ jobs:
               lazy = true
             )
           '
-      - name: Create releases for artifacts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Helper function to create release if it doesn't exist
-          create_release_if_missing() {
-            local tag=$1
-            local file=$2
-            local description=$3
-
-            if gh release view "$tag" > /dev/null 2>&1; then
-              echo "Release $tag already exists, skipping creation"
-            else
-              echo "Creating release $tag"
-              gh release create "$tag" "$file" --title "$tag" --notes "$description"
-            fi
-          }
-
-          PLOTLY_VERSION="${{ steps.versions.outputs.plotly_version }}"
-          SCHEMA_VERSION="${{ steps.versions.outputs.schema_version }}"
-          KALEIDO_VERSION="${{ steps.versions.outputs.kaleido_version }}"
-
-          create_release_if_missing "plotly.min.js-$PLOTLY_VERSION" "plotly.min.js.tar.gz" "Plotly.js library version $PLOTLY_VERSION"
-          create_release_if_missing "plot-schema.json-$SCHEMA_VERSION" "plot-schema.json.tar.gz" "Plotly schema version $SCHEMA_VERSION"
-          create_release_if_missing "templates-$SCHEMA_VERSION" "templates.tar.gz" "Plotly Python templates"
-          create_release_if_missing "kaleido-$KALEIDO_VERSION" "kaleido.tar.gz" "Kaleido wheel version $KALEIDO_VERSION"
       - name: Create PR for Artifacts.toml if changed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
