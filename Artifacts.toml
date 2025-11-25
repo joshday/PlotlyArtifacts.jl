@@ -1,0 +1,20 @@
+[plot_schema_json]
+git-tree-sha1 = "9d6294475c7d4e3ab20593da0994fee40fa83449"
+
+    [[plot_schema_json.download]]
+    sha256 = "54a241b500f3d4cb2081ad64de2337abbae1a67f05cb56ce69765ae0ca73093c"
+    url = "https://github.com/joshday/PlotlyArtifacts.jl/releases/download/Artifacts/plot-schema.json-v3.3.0.tar.gz"
+
+[plotly_min_js]
+git-tree-sha1 = "d572fcc2a43ce4cbf867cfedaea9bdc44a149b1e"
+
+    [[plotly_min_js.download]]
+    sha256 = "4c5a7004895fd95ec0de411b04c7063d319ef194df707fd76cf518b2d89ed857"
+    url = "https://github.com/joshday/PlotlyArtifacts.jl/releases/download/Artifacts/plotly.min.js-v3.3.0.tar.gz"
+
+[templates]
+git-tree-sha1 = "29a6d9308df19323652723244cdf2cf855e39f9e"
+
+    [[templates.download]]
+    sha256 = "66c5496387232d9f5df174f61dd125c3e36aea10ac4e89c2a4888501e4dceafe"
+    url = "https://github.com/joshday/PlotlyArtifacts.jl/releases/download/Artifacts/templates-v6.5.0.tar.gz"
